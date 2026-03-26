@@ -1,4 +1,5 @@
 SQL Решенные задачи с сайта sql-academy
+
 Выведите имена first_name и фамилии last_name студентов из таблицы Student, у кого отсутствует отчество middle_name
 ~~~~sql
 SELECT first_name,
