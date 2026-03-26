@@ -1,0 +1,3014 @@
+# Решения заданий тренажёра от [SQL ACADEMY](https://sql-academy.org)
+
+<details>
+<summary><h2>Задание 1</h2><br>Вывести имена всех людей, которые есть в базе данных авиакомпаний</summary>
+
+```mysql
+SELECT name FROM Passenger;
+```
+
+
+```mysql
+SELECT name FROM (
+SELECT * FROM Passenger) alias_name;
+```
+
+
+```mysql
+WITH Pass_name AS
+(SELECT name FROM Passenger)
+SELECT * FROM Pass_name;
+```
+
+</details>
+<details>
+<summary><h2>Задание 2</h2><br>Вывести названия всеx авиакомпаний</summary>
+
+```mysql
+SELECT name FROM Company;
+```
+
+
+```mysql
+SELECT name FROM (SELECT * FROM Company) zu;
+```
+
+
+```mysql
+WITH Comp AS 
+(SELECT * FROM Company)
+SELECT name FROM Comp;
+```
+
+</details>
+<details>
+<summary><h2>Задание 3</h2><br>Вывести все рейсы, совершенные из Москвы</summary>
+
+```mysql
+SELECT * FROM Trip
+WHERE town_from="Moscow";
+```
+
+
+```mysql
+WITH from_Moscow AS (
+SELECT * FROM Trip
+WHERE town_from="Moscow")
+
+SELECT * FROM from_Moscow;
+```
+
+
+```mysql
+SELECT id, company, plane, town_from, town_to, time_out, time_in FROM Trip
+WHERE town_from="Moscow";
+```
+
+</details>
+<details>
+<summary><h2>Задание 4</h2><br>Вывести имена людей, которые заканчиваются на "man"</summary>
+
+```mysql
+SELECT name FROM Passenger
+WHERE name LIKE "%man";
+```
+
+
+```mysql
+SELECT name FROM Passenger
+WHERE name REGEXP "man$";
+```
+
+
+```mysql
+WITH End_man AS (
+SELECT name FROM Passenger
+WHERE name RLIKE "man$")
+
+SELECT name FROM End_man;
+```
+
+</details>
+<details>
+<summary><h2>Задание 5</h2><br>Вывести количество рейсов, совершенных на TU-134</summary>
+
+```mysql
+SELECT COUNT(*) as count FROM Trip
+WHERE plane="TU-134";
+```
+
+
+```mysql
+WITH 134_t (count) AS (
+SELECT COUNT(*) FROM Trip
+WHERE plane="TU-134")
+
+SELECT * FROM 134_t;
+```
+
+
+```mysql
+SET @cnt_134 = (
+SELECT COUNT(*) FROM Trip
+WHERE plane="TU-134"
+);
+
+SELECT @cnt_134 count;
+```
+
+</details>
+<details>
+<summary><h2>Задание 6</h2><br>Какие компании совершали перелеты на Boeing</summary>
+
+```mysql
+SELECT DISTINCT name FROM Company
+JOIN Trip ON Trip.company=Company.id
+WHERE plane="Boeing";
+```
+
+
+```mysql
+SELECT DISTINCT name 
+FROM Company, Trip
+WHERE Trip.company=Company.id 
+AND plane="Boeing";
+```
+
+
+```mysql
+SELECT name FROM Company
+INNER JOIN Trip 
+ON Trip.company=Company.id
+WHERE plane="Boeing"
+GROUP BY name;
+```
+
+</details>
+<details>
+<summary><h2>Задание 7</h2><br>Вывести все названия самолётов, на которых можно улететь в Москву (Moscow)</summary>
+
+```mysql
+SELECT DISTINCT plane FROM Trip
+WHERE town_to="Moscow";
+```
+
+
+```mysql
+SELECT plane FROM Trip
+WHERE town_to="Moscow"
+GROUP BY plane;
+```
+
+
+```mysql
+SELECT plane FROM Trip
+GROUP BY plane, town_to
+HAVING town_to="Moscow";
+```
+
+</details>
+<details>
+<summary><h2>Задание 8</h2><br>В какие города можно улететь из Парижа (Paris) и сколько времени это займёт?</summary>
+
+```mysql
+SELECT town_to, TIMEDIFF(time_in, time_out) AS flight_time FROM Trip
+WHERE town_from ='Paris';
+```
+
+
+```mysql
+SELECT town_to, 
+    DATE_FORMAT(
+    TIME(time_in - time_out),
+    "%H:%i:%s") flight_time FROM Trip
+WHERE town_from RLIKE '^Paris';
+```
+
+
+```mysql
+SELECT town_to, TIME(time_in - time_out) flight_time FROM Trip
+WHERE town_from RLIKE '^Paris';
+```
+
+
+```mysql
+SELECT town_to, TIME(time_in - time_out) flight_time FROM Trip
+GROUP BY id, town_from
+HAVING town_from REGEXP 'Paris';
+```
+
+
+```mysql
+SELECT town_to, MAX(TIME(time_in - time_out)) OVER(
+PARTITION BY town_to
+) flight_time FROM Trip
+WHERE town_from RLIKE '^Paris';
+```
+
+</details>
+<details>
+<summary><h2>Задание 9</h2><br>Какие компании организуют перелеты из Владивостока (Vladivostok)?</summary>
+
+```mysql
+SELECT name FROM Company
+JOIN Trip ON Trip.company=Company.id
+WHERE town_from = "Vladivostok";
+```
+
+
+```mysql
+SELECT name FROM Company, Trip
+WHERE Trip.company=Company.id
+AND town_from RLIKE "^Vladiv";   
+```
+
+
+```mysql
+SELECT name FROM Company AS c
+INNER JOIN Trip AS t ON t.company=c.id
+GROUP BY name, town_from
+HAVING town_from = "Vladivostok";
+```
+
+
+```mysql
+SELECT name 
+FROM Company
+WHERE id IN (SELECT company FROM Trip
+WHERE town_from = "Vladivostok") ;
+```
+
+</details>
+<details>
+<summary><h2>Задание 10</h2><br>Вывести вылеты, совершенные с 10 ч. по 14 ч. 1 января 1900 г.</summary>
+
+```mysql
+SELECT * FROM Trip
+WHERE YEAR(time_out) = 1900 AND MONTH(time_out) = 1 AND DAY(time_out) = 1 AND HOUR(time_out) BETWEEN 10 AND 14
+ORDER BY time_out
+LIMIT 3;
+```
+
+
+```mysql
+SELECT * FROM Trip
+WHERE time_out BETWEEN '1900-01-01T10:00:00.000Z' AND '1900-01-01T14:00:00.000Z';
+```
+
+
+```mysql
+SELECT * FROM Trip
+WHERE YEAR(time_out) = 1900 AND MONTH(time_out) = 1 AND DAY(time_out) = 1 AND TIME(time_out) BETWEEN '10:00:00' AND '14:00:00';
+```
+
+
+```mysql
+SELECT * FROM Trip
+WHERE HOUR(time_out) <= 14 AND 
+HOUR(time_out) > 10 AND
+YEAR(time_out) = 1900 AND
+MONTH(time_out) = 1 AND 
+DAY(time_out) = 1 AND 
+time_out <= "1900-01-01T14:00:00.000Z";
+```
+
+
+```mysql
+SELECT * FROM trip
+WHERE DATE(time_out) = '1900-01-01'
+AND TIME_FORMAT(time_out, '%H:%i') >= '10:00'
+AND TIME_FORMAT(time_out, '%H:%i') <= '14:00';
+```
+
+</details>
+<details>
+<summary><h2>Задание 11</h2><br>Выведите пассажиров с самым длинным ФИО. Пробелы, дефисы и точки считаются частью имени.</summary>
+
+```mysql
+SELECT name FROM Passenger
+WHERE LENGTH(name) = (SELECT MAX(LENGTH(name)) FROM Passenger);
+```
+
+
+```mysql
+SELECT name FROM Passenger
+WHERE LENGTH(name) = 
+(
+SELECT MAX(LENGTH(name)) FROM Passenger
+);
+```
+
+
+```mysql
+SET @max_len = (
+SELECT MAX(LENGTH(name)) FROM Passenger
+);
+
+SELECT name FROM Passenger
+GROUP BY name
+HAVING LENGTH(name) = @max_len;
+```
+
+</details>
+<details>
+<summary><h2>Задание 12</h2><br>Выведите идентификаторы всех рейсов и количество пассажиров на них. Обратите внимание, что на каких-то рейсах пассажиров может не быть. В этом случае выведите число "0".</summary>
+
+```mysql
+SELECT Trip.id, IFNULL(COUNT(passenger), 0) as count FROM Trip
+LEFT JOIN Pass_in_trip ON Trip.id=Pass_in_trip.trip
+GROUP BY Trip.id;
+```
+
+
+```mysql
+SELECT Trip.id, IFNULL(COUNT(passenger), 0) as count FROM Pass_in_trip
+RIGHT JOIN Trip ON Trip.id=Pass_in_trip.trip
+GROUP BY Trip.id;
+```
+
+
+```mysql
+SELECT DISTINCT Trip.id, 
+IFNULL((COUNT(passenger) OVER (
+PARTITION BY Trip.id
+)), 0) as count 
+FROM Trip
+LEFT OUTER JOIN Pass_in_trip 
+ON Trip.id=Pass_in_trip.trip;
+```
+
+
+```mysql
+SELECT id, (
+SELECT COUNT(passenger) 
+FROM Pass_in_trip
+WHERE Trip.id=Pass_in_trip.trip
+) AS count
+FROM Trip;
+```
+
+</details>
+<details>
+<summary><h2>Задание 13</h2><br>Вывести имена людей, у которых есть полный тёзка среди пассажиров</summary>
+
+```mysql
+SELECT name FROM Passenger
+GROUP BY name
+HAVING COUNT(name) > 1;
+```
+
+
+```mysql
+SELECT name FROM Passenger
+EXCEPT ALL
+SELECT DISTINCT name FROM Passenger;
+```
+
+
+```mysql
+SELECT name FROM Passenger
+EXCEPT ALL
+SELECT name FROM Passenger
+GROUP BY name;
+```
+
+
+```mysql
+SELECT p.name FROM Passenger p, Passenger z
+WHERE p.name = z.name AND
+p.id != z.id
+```
+
+
+```mysql
+SELECT DISTINCT Art.name 
+FROM Passenger Art
+JOIN Passenger Bob 
+ON Art.id <> Bob.id AND Art.name=Bob.name;
+```
+
+
+```mysql
+WITH Dzi AS (SELECT DISTINCT name, (
+SELECT MIN(id) FROM Passenger
+WHERE zoz.name=Passenger.name
+) nwid
+FROM Passenger zoz)
+
+SELECT Passenger.name FROM Passenger
+LEFT JOIN Dzi ON Dzi.name=Passenger.name AND Dzi.nwid=Passenger.id
+WHERE nwid IS NULL
+GROUP BY Dzi.nwid, Passenger.name;
+```
+
+
+```mysql
+WITH Dzi AS (SELECT DISTINCT name, (
+SELECT MIN(id) FROM Passenger
+WHERE zoz.name=Passenger.name
+) nwid
+FROM Passenger zoz)
+
+SELECT Passenger.name FROM Passenger
+LEFT JOIN Dzi ON Dzi.name=Passenger.name AND Dzi.nwid=Passenger.id
+
+GROUP BY Dzi.nwid, Passenger.name
+HAVING ISNULL(nwid);
+```
+
+</details>
+<details>
+<summary><h2>Задание 14</h2><br>В какие города летал Bruce Willis</summary>
+
+```mysql
+SELECT town_to FROM Trip
+JOIN Pass_in_trip ON Pass_in_trip.trip=Trip.id
+WHERE passenger=1;
+```
+
+
+```mysql
+SELECT town_to FROM Trip, Pass_in_trip
+WHERE Pass_in_trip.trip=Trip.id
+WHERE passenger=1;
+```
+
+
+```mysql
+SELECT town_to FROM Trip, Pass_in_trip, Passenger
+WHERE Pass_in_trip.trip=Trip.id
+AND Pass_in_trip.passenger=Passenger.id
+AND name = "Bruce Willis";
+```
+
+
+```mysql
+SELECT town_to FROM Trip, Pass_in_trip
+WHERE Pass_in_trip.trip=Trip.id
+AND passenger IN (
+SELECT id FROM Passenger
+WHERE name = "Bruce Willis");
+```
+
+</details>
+<details>
+<summary><h2>Задание 15</h2><br>Выведите идентификатор пассажира Стив Мартин (Steve Martin) и дату и время его прилёта в Лондон (London)</summary>
+
+```mysql
+SELECT passenger AS id, time_in FROM Trip
+JOIN Pass_in_trip ON Pass_in_trip.trip=Trip.id
+JOIN Passenger ON Passenger.id=Pass_in_trip.passenger
+WHERE name="Steve Martin" AND town_to="London";
+```
+
+
+```mysql
+SELECT passenger id, time_in 
+FROM Trip, Pass_in_trip, Passenger
+WHERE Pass_in_trip.trip=Trip.id
+AND Passenger.id=Pass_in_trip.passenger
+AND name="Steve Martin" 
+AND town_to="London";
+```
+
+
+```mysql
+SELECT Passenger.id, time_in 
+FROM Trip, Pass_in_trip, Passenger
+WHERE Pass_in_trip.trip=Trip.id
+AND Passenger.id=Pass_in_trip.passenger
+AND name="Steve Martin" 
+AND town_to="London";
+```
+
+</details>
+<details>
+<summary><h2>Задание 16</h2><br>Вывести отсортированный по количеству перелетов (по убыванию) и имени (по возрастанию) список пассажиров, совершивших хотя бы 1 полет.</summary>
+
+```mysql
+SELECT name, COUNT(trip) count FROM Passenger
+JOIN Pass_in_trip ON Passenger.id=Pass_in_trip.passenger
+GROUP BY name
+ORDER BY count DESC, name;
+```
+
+
+```mysql
+WITH Bob AS (
+SELECT Passenger.id, name, trip FROM Passenger, Pass_in_trip
+WHERE Pass_in_trip.passenger=Passenger.id
+)
+
+SELECT Bob.name, COUNT(trip) AS count
+FROM Bob
+GROUP BY Bob.id
+ORDER BY count DESC, name;
+```
+
+
+```mysql
+SELECT name, (
+SELECT COUNT(trip) FROM Pass_in_trip
+WHERE Pass_in_trip.passenger=Passenger.id
+) AS count
+FROM Passenger
+GROUP BY name, count
+HAVING count
+ORDER BY count DESC, name;
+```
+
+
+```mysql
+SELECT DISTINCT name, COUNT(trip) OVER (
+PARTITION BY name
+ORDER BY name
+) count
+FROM Pass_in_trip, Passenger
+WHERE Pass_in_trip.passenger=Passenger.id
+ORDER BY count DESC;
+```
+
+</details>
+<details>
+<summary><h2>Задание 17</h2><br>Определить, сколько потратил в 2005 году каждый из членов семьи. В результирующей выборке не выводите тех членов семьи, которые ничего не потратили.
+</summary>
+
+```mysql
+SELECT member_name, status, SUM(amount*unit_price) AS costs 
+FROM FamilyMembers
+JOIN Payments ON Payments.family_member=FamilyMembers.member_id
+WHERE YEAR(date) = 2005
+GROUP BY member_name, status;
+```
+
+
+```mysql
+SELECT member_name, status, SUM(amount*unit_price) costs 
+FROM FamilyMembers, Payments
+WHERE Payments.family_member<=>FamilyMembers.member_id
+AND date RLIKE "^2005"
+GROUP BY member_name, status;
+```
+
+
+```mysql
+SELECT member_name, status, (
+SELECT SUM(amount*unit_price) FROM Payments
+WHERE FamilyMembers.member_id=Payments.family_member
+AND date REGEXP "^2005"
+) costs 
+FROM FamilyMembers
+GROUP BY member_name, status, costs
+HAVING costs;
+```
+
+
+```mysql
+SELECT DISTINCT member_name, status, 
+SUM(amount*unit_price) OVER (
+PARTITION BY member_name, status
+) costs 
+FROM FamilyMembers, Payments
+WHERE Payments.family_member<=>FamilyMembers.member_id
+AND date REGEXP "^2005";
+```
+
+</details>
+<details>
+<summary><h2>Задание 18</h2><br>Выведите имя самого старшего человека. Если таких несколько, то выведите их всех.</summary>
+
+```mysql
+SELECT member_name FROM FamilyMembers
+ORDER BY birthday
+LIMIT 1;
+```
+
+
+```mysql
+SELECT member_name FROM FamilyMembers
+WHERE birthday IN (SELECT MIN(birthday) FROM FamilyMembers);
+```
+
+
+```mysql
+SET @max = (
+SELECT MIN(birthday) 
+FROM FamilyMembers
+);
+SELECT member_name
+FROM FamilyMembers
+WHERE birthday <=> @max;
+```
+
+</details>
+<details>
+<summary><h2>Задание 19</h2><br>Определить, кто из членов семьи покупал картошку (potato)</summary>
+
+```mysql
+SELECT DISTINCT status FROM FamilyMembers
+JOIN Payments ON FamilyMembers.member_id=Payments.family_member
+JOIN Goods ON Payments.good=Goods.good_id
+WHERE good_name="potato";
+```
+
+
+```mysql
+SELECT status FROM FamilyMembers
+INNER JOIN Payments ON FamilyMembers.member_id=Payments.family_member
+INNER JOIN Goods ON Payments.good=Goods.good_id
+WHERE good_name="potato"
+GROUP BY status;
+```
+
+
+```mysql
+SELECT status 
+FROM FamilyMembers, Payments, Goods
+WHERE FamilyMembers.member_id=
+Payments.family_member
+AND Payments.good=Goods.good_id
+AND good_name="potato"
+GROUP BY status;
+```
+
+</details>
+<details>
+<summary><h2>Задание 20</h2><br>Сколько и кто из семьи потратил на развлечения (entertainment). Вывести статус в семье, имя, сумму</summary>
+
+```mysql
+SELECT status, member_name, SUM(amount*unit_price) AS costs FROM FamilyMembers
+JOIN Payments ON Payments.family_member=FamilyMembers.member_id
+JOIN Goods ON Goods.good_id=Payments.good
+WHERE type = 4
+GROUP BY status, member_name;
+```
+
+
+```mysql
+SELECT status, member_name, SUM(amount*unit_price) costs 
+FROM FamilyMembers, Payments, Goods, GoodTypes
+WHERE Payments.family_member=FamilyMembers.member_id
+AND Goods.good_id=Payments.good
+AND Goods.type=GoodTypes.good_type_id
+AND good_type_name = "entertainment"
+GROUP BY status, member_name;
+```
+
+
+```mysql
+SELECT DISTINCT status, member_name, 
+SUM(amount*unit_price) OVER(
+PARTITION BY status, member_name
+) costs 
+FROM FamilyMembers, Payments, Goods, GoodTypes
+WHERE Payments.family_member=FamilyMembers.member_id
+AND Goods.good_id=Payments.good
+AND Goods.type=GoodTypes.good_type_id
+AND good_type_name = "entertainment";
+```
+
+
+```mysql
+SELECT status, member_name, (
+SELECT SUM(amount*unit_price)
+FROM Payments, Goods, GoodTypes
+WHERE FamilyMembers.member_id=Payments.family_member
+AND Goods.good_id=Payments.good
+AND Goods.type=GoodTypes.good_type_id
+AND good_type_name = "entertainment"
+) costs 
+FROM FamilyMembers
+GROUP BY status, member_name, costs
+HAVING costs IS NOT NULL;
+```
+
+</details>
+<details>
+<summary><h2>Задание 21</h2><br>Определить товары, которые покупали более 1 раза</summary>
+
+```mysql
+SELECT good_name FROM Goods
+JOIN Payments ON Payments.good=Goods.good_id
+GROUP BY good_name
+HAVING COUNT(amount) > 1;
+```
+
+
+```mysql
+SELECT DISTINCT good_name FROM (
+SELECT good FROM Payments
+EXCEPT ALL
+SELECT DISTINCT good FROM Payments
+) AS Exc, Goods
+WHERE Exc.good=Goods.good_id;
+```
+
+
+```mysql
+WITH unic AS (
+SELECT DISTINCT t1.good
+FROM Payments AS t1, Payments AS t2
+WHERE t2.good=t1.good 
+AND NOT t2.payment_id<=>t1.payment_id)
+
+SELECT good_name 
+FROM Goods, unic
+WHERE good_id = unic.good;
+```
+
+
+```mysql
+SELECT DISTINCT * FROM (
+SELECT good_name FROM Goods
+JOIN Payments ON Payments.good=Goods.good_id
+EXCEPT ALL
+SELECT DISTINCT good_name FROM Goods
+JOIN Payments ON Payments.good=Goods.good_id
+) alis;
+```
+
+
+```mysql
+SELECT DISTINCT g1.good_name
+FROM Goods g1, Payments p1, Payments p2
+WHERE p1.good = g1.good_id
+AND g1.good_id = p2.good 
+AND p2.payment_id <> p1.payment_id;
+```
+
+</details>
+<details>
+<summary><h2>Задание 22</h2><br>Найти имена всех матерей (mother)</summary>
+
+```mysql
+SELECT member_name FROM FamilyMembers
+WHERE status="mother";
+```
+
+
+```mysql
+SELECT member_name 
+FROM FamilyMembers
+GROUP BY member_name, status
+HAVING status = "mother";
+```
+
+
+```mysql
+WITH Mothers AS (
+SELECT member_name FROM FamilyMembers
+WHERE status LIKE "mother")
+
+SELECT * FROM Mothers;
+```
+
+</details>
+<details>
+<summary><h2>Задание 23</h2><br>Найдите самый дорогой деликатес (delicacies) и выведите его цену</summary>
+
+```mysql
+SELECT good_name, unit_price FROM Goods
+JOIN Payments ON Payments.good=Goods.good_id
+WHERE type = 3
+ORDER BY unit_price DESC
+LIMIT 1;
+```
+
+
+```mysql
+WITH Deli AS (SELECT good_name, unit_price, RANK() OVER (
+ORDER BY unit_price DESC
+) as r
+FROM Goods, Payments
+WHERE Payments.good=Goods.good_id AND type=3)
+
+SELECT good_name, unit_price FROM Deli
+WHERE r = 1;
+```
+
+
+```mysql
+SELECT good_name, unit_price FROM (SELECT good_name, unit_price, ROW_NUMBER() OVER (
+ORDER BY unit_price DESC
+) as r
+FROM Goods, Payments
+WHERE Payments.good=Goods.good_id AND type=3) Deli
+WHERE r = 1;
+```
+
+</details>
+<details>
+<summary><h2>Задание 24</h2><br>Определить кто и сколько потратил в июне 2005</summary>
+
+```mysql
+SELECT member_name, SUM(amount*unit_price) as costs FROM FamilyMembers
+JOIN Payments ON Payments.family_member=FamilyMembers.member_id
+WHERE YEAR(date) = 2005 AND MONTH(date) = 6
+GROUP BY member_name;
+```
+
+
+```mysql
+SELECT member_name, SUM(amount*unit_price) as costs 
+FROM FamilyMembers, Payments
+WHERE Payments.family_member=FamilyMembers.member_id
+AND YEAR(date) = 2005 AND MONTH(date) = 6
+GROUP BY member_name;
+```
+
+
+```mysql
+SELECT DISTINCT member_name, 
+SUM(amount*unit_price) OVER (
+PARTITION BY member_name
+) as costs 
+FROM FamilyMembers, Payments
+WHERE Payments.family_member=FamilyMembers.member_id
+AND YEAR(date) = 2005 AND MONTH(date) = 6;
+```
+
+
+```mysql
+SELECT member_name, (
+SELECT SUM(amount*unit_price) FROM Payments
+WHERE F1.member_id = family_member 
+AND YEAR(date) = 2005 AND MONTH(date) = 6
+) as costs 
+FROM FamilyMembers F1
+GROUP BY member_name, costs
+HAVING costs;
+```
+
+</details>
+<details>
+<summary><h2>Задание 25</h2><br>Определить, какие товары не покупались в 2005 году
+</summary>
+
+```mysql
+SELECT good_name FROM Goods
+    LEFT JOIN Payments
+    ON Payments.good=Goods.good_id
+WHERE good_id 
+    NOT IN (SELECT good FROM Payments WHERE
+    YEAR(date) = 2005);
+```
+
+
+```mysql
+SELECT good_name FROM Goods
+EXCEPT
+SELECT good_name FROM Goods
+JOIN Payments ON Payments.good=Goods.good_id
+WHERE YEAR(date) = 2005;
+```
+
+
+```mysql
+SELECT good_name FROM Goods
+WHERE good_id NOT IN 
+(SELECT good FROM Payments 
+WHERE YEAR(date) = 2005);
+```
+
+</details>
+<details>
+<summary><h2>Задание 26</h2><br>Определить группы товаров, которые не приобретались в 2005 году</summary>
+
+```mysql
+SELECT good_type_name FROM GoodTypes
+EXCEPT
+SELECT good_type_name FROM GoodTypes
+JOIN Goods ON GoodTypes.good_type_id=Goods.type
+JOIN Payments ON Goods.good_id=Payments.good
+WHERE YEAR(date) = 2005;
+```
+
+
+```mysql
+SELECT good_type_name FROM GoodTypes
+WHERE good_type_id NOT IN (
+SELECT type FROM Goods
+WHERE good_id IN 
+(SELECT good FROM Payments 
+WHERE YEAR(date) = 2005)
+);
+```
+
+
+```mysql
+WITH N5 AS (SELECT good_type_name FROM GoodTypes, Goods,
+Payments
+WHERE GoodTypes.good_type_id<=>Goods.type
+AND Goods.good_id<=>Payments.good
+AND YEAR(date) = 2005)
+
+SELECT good_type_name FROM GoodTypes
+EXCEPT
+SELECT * FROM N5;
+```
+
+</details>
+<details>
+<summary><h2>Задание 27</h2><br>Узнайте, сколько было потрачено на каждую из групп товаров в 2005 году. Выведите название группы и потраченную на неё сумму. Если потраченная сумма равна нулю, т.е. товары из этой группы не покупались в 2005 году, то не выводите её.</summary>
+
+```mysql
+SELECT good_type_name, SUM(amount * unit_price) as costs FROM GoodTypes
+JOIN Goods ON GoodTypes.good_type_id=Goods.type
+JOIN Payments ON Goods.good_id=Payments.good
+WHERE YEAR(date) = 2005
+GROUP BY good_type_name;
+```
+
+
+```mysql
+SELECT good_type_name, 
+SUM(amount * unit_price) costs 
+FROM GoodTypes, Goods, Payments
+WHERE GoodTypes.good_type_id=Goods.type
+AND Goods.good_id=Payments.good
+AND YEAR(date) = 2005
+GROUP BY good_type_name;
+```
+
+
+```mysql
+SELECT DISTINCT good_type_name, 
+SUM(amount * unit_price) OVER (
+PARTITION BY good_type_name
+)
+costs 
+FROM GoodTypes, Goods, Payments
+WHERE GoodTypes.good_type_id=Goods.type
+AND Goods.good_id=Payments.good
+AND YEAR(date) = 2005;
+```
+
+</details>
+<details>
+<summary><h2>Задание 28</h2><br>Сколько рейсов совершили авиакомпании из Ростова (Rostov) в Москву (Moscow) ?</summary>
+
+```mysql
+SELECT COUNT(*) AS count FROM Trip
+WHERE town_from="Rostov" AND town_to="Moscow";
+```
+
+
+```mysql
+SELECT COUNT(id) count FROM Trip
+WHERE town_from="Rostov" AND town_to="Moscow";
+```
+
+
+```mysql
+SET @Rst_Msc = (
+SELECT COUNT(*) FROM Trip
+WHERE town_from="Rostov" AND town_to="Moscow");
+
+SELECT @Rst_Msc AS count;
+```
+
+</details>
+<details>
+<summary><h2>Задание 29</h2><br>Выведите имена пассажиров улетевших в Москву (Moscow) на самолете TU-134. В ответе не должно быть дубликатов.</summary>
+
+```mysql
+SELECT DISTINCT name FROM Passenger
+JOIN Pass_in_trip ON Passenger.id=Pass_in_trip.passenger
+JOIN Trip ON Pass_in_trip.trip=Trip.id
+WHERE town_to="Moscow" AND plane="TU-134";
+```
+
+
+```mysql
+SELECT DISTINCT name FROM Passenger, Pass_in_trip, Trip
+WHERE Passenger.id=Pass_in_trip.passenger
+AND Pass_in_trip.trip=Trip.id
+AND plane REGEXP "^TU-134$"
+AND town_to REGEXP "^Moscow$";
+```
+
+
+```mysql
+SELECT DISTINCT name FROM Passenger
+WHERE id IN (
+SELECT passenger FROM Pass_in_trip, Trip
+WHERE Pass_in_trip.trip=Trip.id
+AND plane REGEXP "^TU-134$"
+AND town_to REGEXP "^Moscow$"
+);
+```
+
+
+```mysql
+SELECT name FROM Passenger
+WHERE id IN (
+SELECT passenger FROM Pass_in_trip, Trip
+WHERE Pass_in_trip.trip=Trip.id
+AND plane REGEXP "^TU-134$"
+AND town_to REGEXP "^Moscow$"
+)
+GROUP BY name;
+```
+
+</details>
+<details>
+<summary><h2>Задание 30</h2><br>Выведите нагруженность (число пассажиров) каждого рейса (trip). Результат вывести в отсортированном виде по убыванию нагруженности.</summary>
+
+```mysql
+SELECT trip, COUNT(passenger) as count FROM Pass_in_trip
+GROUP BY trip
+ORDER BY count DESC;
+```
+
+
+```mysql
+SELECT DISTINCT  trip, COUNT(passenger) OVER(
+PARTITION BY trip
+) count FROM Pass_in_trip
+ORDER BY count DESC;
+```
+
+
+```mysql
+SELECT DISTINCT trip, (
+SELECT COUNT(passenger) 
+FROM Pass_in_trip
+WHERE Pass_in_trip.trip<=>Sub.trip
+) AS count 
+FROM Pass_in_trip AS Sub
+ORDER BY count DESC;
+```
+
+</details>
+<details>
+<summary><h2>Задание 31</h2><br>Вывести всех членов семьи с фамилией Quincey.</summary>
+
+```mysql
+SELECT * FROM FamilyMembers
+WHERE member_name LIKE "%Quincey";
+```
+
+
+```mysql
+SELECT * FROM FamilyMembers
+WHERE member_name REGEXP "Quincey$";
+```
+
+
+```mysql
+SELECT member_id, status, member_name, birthday 
+FROM FamilyMembers
+WHERE member_name RLIKE "Quincey$";
+```
+
+</details>
+<details>
+<summary><h2>Задание 32</h2><br>Вывести средний возраст людей (в годах), хранящихся в базе данных. Результат округлите до целого в меньшую сторону.</summary>
+
+```mysql
+SELECT FLOOR(AVG(TIMESTAMPDIFF(YEAR, birthday, NOW()))) age FROM FamilyMembers;
+```
+
+
+```mysql
+WITH SC AS (
+SELECT SUM(
+TIMESTAMPDIFF(YEAR, birthday, NOW())
+) s, COUNT(*) c
+FROM FamilyMembers
+)
+
+SELECT FLOOR(s/c) age FROM SC;
+```
+
+
+```mysql
+SET @sum = (
+SELECT SUM(
+TIMESTAMPDIFF(YEAR, birthday, NOW())
+) AS age FROM FamilyMembers
+);
+
+SET @cnt = (
+SELECT COUNT(*)
+FROM FamilyMembers);
+
+SELECT FLOOR(@sum/@cnt) age;
+```
+
+
+```mysql
+SET @sum = (
+SELECT SUM(
+TIMESTAMPDIFF(YEAR, birthday, NOW())
+) AS age FROM FamilyMembers
+);
+
+SELECT FLOOR(@sum/(SELECT COUNT(*) FROM FamilyMembers)) age;
+```
+
+
+```mysql
+WITH SC (s, c) 
+AS (
+SELECT SUM(
+TIMESTAMPDIFF(YEAR, birthday, NOW())
+), COUNT(*)
+FROM FamilyMembers
+)
+
+SELECT FLOOR(s/c) age FROM SC;
+```
+
+</details>
+<details>
+<summary><h2>Задание 33</h2><br>Найдите среднюю цену икры на основе данных, хранящихся в таблице Payments. В базе данных хранятся данные о покупках красной (red caviar) и черной икры (black caviar). В ответе должна быть одна строка со средней ценой всей купленной когда-либо икры.</summary>
+
+```mysql
+SELECT SUM(unit_price) / COUNT(amount) as cost FROM Payments
+JOIN Goods ON Goods.good_id=Payments.good
+WHERE good_name LIKE "%caviar";
+```
+
+
+```mysql
+SELECT AVG(unit_price) cost FROM Payments
+INNER JOIN Goods ON Goods.good_id=Payments.good
+WHERE good_name LIKE "%caviar";
+```
+
+
+```mysql
+SELECT AVG(unit_price) cost 
+FROM Payments, Goods
+WHERE Goods.good_id=Payments.good
+AND good_name RLIKE "caviar$";
+```
+
+</details>
+<details>
+<summary><h2>Задание 34</h2><br>Сколько всего 10-ых классов</summary>
+
+```mysql
+SELECT COUNT(id) as count FROM Class
+WHERE name LIKE "10%";
+```
+
+
+```mysql
+SELECT COUNT(*) count FROM Class
+WHERE name REGEXP "10";
+```
+
+
+```mysql
+SELECT COUNT(NULLIF(name RLIKE "10", 0)) count
+FROM Class;
+```
+
+
+```mysql
+SELECT COUNT(IF(name RLIKE "10", 1, NULL)) as count FROM Class;
+```
+
+</details>
+<details>
+<summary><h2>Задание 35</h2><br>Сколько различных кабинетов школы использовались 2 сентября 2019 года для проведения занятий?</summary>
+
+```mysql
+SELECT COUNT(DISTINCT classroom) count FROM Schedule
+WHERE YEAR(date) = 2019 AND MONTH(date) = 9 AND DAY(date) = 2;
+```
+
+
+```mysql
+SELECT COUNT(*) AS count FROM (
+SELECT classroom FROM Schedule
+WHERE YEAR(date) = 2019 AND MONTH(date) = 9 AND DAY(date) = 2
+GROUP BY classroom) qq;
+```
+
+
+```mysql
+SELECT COUNT(*) AS count FROM (
+SELECT DISTINCT classroom FROM Schedule
+WHERE YEAR(date) = 2019 AND MONTH(date) = 9 AND DAY(date) = 2) qq;
+```
+
+</details>
+<details>
+<summary><h2>Задание 36</h2><br>Выведите информацию об обучающихся живущих на улице Пушкина (ul. Pushkina)?
+</summary>
+
+```mysql
+SELECT * FROM Student
+WHERE address LIKE "%Pushkin%";
+```
+
+
+```mysql
+SELECT * FROM Student
+WHERE address RLIKE "Pushkin";
+```
+
+
+```mysql
+SELECT * FROM Student
+WHERE address REGEXP "^ul. Pushkina";
+```
+
+</details>
+<details>
+<summary><h2>Задание 37</h2><br>Сколько лет самому молодому обучающемуся ?</summary>
+
+```mysql
+SELECT MIN(TIMESTAMPDIFF(YEAR, birthday, NOW())) year FROM Student;
+```
+
+
+```mysql
+SELECT TIMESTAMPDIFF(YEAR, birthday, NOW())
+AS year FROM Student
+ORDER BY 1
+LIMIT 1;
+```
+
+
+```mysql
+SET @last = (
+SELECT MAX(birthday) FROM Student
+);
+
+SELECT TIMESTAMPDIFF(YEAR, @last, NOW()) year;
+```
+
+</details>
+<details>
+<summary><h2>Задание 38</h2><br>Сколько Анн (Anna) учится в школе ?</summary>
+
+```mysql
+SELECT COUNT(id) AS count FROM Student
+WHERE first_name="anna";
+```
+
+
+```mysql
+SELECT COUNT(*) count FROM Student
+WHERE first_name LIKE "anna";
+```
+
+
+```mysql
+SELECT COUNT(first_name) count FROM Student
+WHERE first_name REGEXP "^anna";
+```
+
+</details>
+<details>
+<summary><h2>Задание 39</h2><br>Сколько обучающихся в 10 B классе ?</summary>
+
+```mysql
+SELECT COUNT(student) AS count FROM Student_in_class
+JOIN Class ON Class.id=Student_in_class.class
+WHERE name="10 B";
+```
+
+
+```mysql
+SELECT COUNT(student) as count FROM Student_in_class
+WHERE class = 6;
+```
+
+
+```mysql
+SELECT COUNT(*) count 
+FROM Student_in_class, Class
+WHERE Class.id=Student_in_class.class
+AND name="10 B";
+```
+
+
+```mysql
+SELECT COUNT(*) count FROM Student_in_class
+WHERE class = (
+SELECT id FROM Class
+WHERE name="10 B");
+```
+
+</details>
+<details>
+<summary><h2>Задание 40</h2><br>Выведите название предметов, которые преподает Ромашкин П.П. (Romashkin P.P.). Обратите внимание, что в базе данных есть несколько учителей с такой фамилией.</summary>
+
+```mysql
+SELECT name as subjects FROM Subject
+JOIN Schedule ON Schedule.subject=Subject.id
+WHERE Teacher = 1;
+```
+
+
+```mysql
+SELECT name subjects FROM Subject, Schedule
+WHERE Schedule.subject=Subject.id 
+AND Teacher = 1;
+```
+
+
+```mysql
+SELECT name subjects 
+FROM Subject, Schedule, Teacher
+WHERE Schedule.subject=Subject.id 
+AND Schedule.teacher=Teacher.id
+AND last_name = "Romashkin"
+AND middle_name = "Petrovich";
+```
+
+</details>
+<details>
+<summary><h2>Задание 41</h2><br>Выясните, во сколько по расписанию начинается четвёртое занятие.</summary>
+
+```mysql
+SELECT DISTINCT start_pair FROM Timepair
+JOIN Schedule ON Schedule.number_pair=Timepair.id
+WHERE number_pair=4;
+```
+
+
+```mysql
+SELECT start_pair FROM Timepair
+WHERE id = 4;
+```
+
+
+```mysql
+SELECT start_pair FROM Timepair
+WHERE id IN
+(
+SELECT number_pair FROM Schedule
+WHERE number_pair = 4
+);
+```
+
+
+```mysql
+SELECT start_pair FROM Timepair, Schedule
+WHERE Schedule.number_pair=Timepair.id
+AND number_pair=4
+LIMIT 1;
+```
+
+
+```mysql
+SELECT start_pair FROM Timepair, Schedule
+WHERE Schedule.number_pair=Timepair.id
+AND number_pair=4
+GROUP BY start_pair;
+```
+
+</details>
+<details>
+<summary><h2>Задание 42</h2><br>Сколько времени обучающийся будет находиться в школе, учась со 2-го по 4-ый уч. предмет?</summary>
+
+```mysql
+SELECT TIMEDIFF(MAX(end_pair), MIN(start_pair)) time FROM Timepair
+WHERE id BETWEEN 2 AND 4;
+```
+
+
+```mysql
+SELECT DISTINCT TIMEDIFF(
+(SELECT end_pair FROM Timepair
+WHERE id = 4),
+(SELECT start_pair FROM Timepair
+WHERE id = 2)
+) as time FROM Timepair;
+```
+
+
+```mysql
+SELECT CAST(MAX(end_pair) - MIN(start_pair) AS TIME) time FROM Timepair
+WHERE id BETWEEN 2 AND 4;
+```
+
+
+```mysql
+SELECT CONVERT(MAX(end_pair) - MIN(start_pair), TIME) time
+FROM Timepair
+WHERE 2 <= id AND id <= 4;
+```
+
+</details>
+<details>
+<summary><h2>Задание 43</h2><br>Выведите фамилии преподавателей, которые ведут физическую культуру (Physical Culture). Отсортируйте преподавателей по фамилии в алфавитном порядке.</summary>
+
+```mysql
+SELECT Teacher.last_name FROM Teacher
+JOIN Schedule ON Schedule.teacher=Teacher.id
+JOIN Subject ON Schedule.subject=Subject.id
+WHERE Subject.name = 'Physical Culture'
+ORDER BY last_name;
+```
+
+
+```mysql
+SELECT Teacher.last_name 
+FROM Teacher, Schedule, Subject
+WHERE Schedule.teacher=Teacher.id
+AND Schedule.subject=Subject.id
+AND Subject.name = 'Physical Culture'
+ORDER BY last_name ASC;
+```
+
+
+```mysql
+SELECT last_name 
+FROM Teacher, Schedule, Subject
+WHERE Schedule.teacher=Teacher.id
+AND Schedule.subject=Subject.id
+AND name = 'Physical Culture'
+ORDER BY 1;
+```
+
+</details>
+<details>
+<summary><h2>Задание 44</h2><br>Найдите максимальный возраст (количество лет) среди обучающихся 10 классов на сегодняшний день. Для получения текущих даты и времени используйте функцию NOW().</summary>
+
+```mysql
+SELECT TIMESTAMPDIFF(YEAR, 
+    birthday, NOW()) AS max_year 
+FROM Student
+JOIN Student_in_class ON Student.id = 
+    Student_in_class.student
+JOIN Class ON Student_in_class.class = 
+    Class.id
+WHERE name LIKE "10%"
+ORDER BY 1 DESC
+LIMIT 1;
+```
+
+
+```mysql
+SELECT MAX(
+    TIMESTAMPDIFF(YEAR, DATE(birthday), NOW())
+    ) as max_year FROM Student
+WHERE id IN  
+    (SELECT student FROM Student_in_class
+    WHERE class IN  
+        (SELECT id FROM Class
+            WHERE name RLIKE '10'));
+```
+
+
+```mysql
+SELECT YEAR(NOW()) - YEAR(FIRST_VALUE(birthday) OVER (ORDER BY birthday)
+    ) max_year FROM Student
+WHERE id IN (SELECT student 
+FROM Student_in_class WHERE class IN  
+(SELECT id FROM Class WHERE name RLIKE '10'))
+LIMIT 1;
+```
+
+
+```mysql
+SELECT LEFT(CURDATE() - (FIRST_VALUE(birthday) OVER (ORDER BY birthday)), 
+        2) max_year FROM Student
+WHERE id IN (SELECT student 
+FROM Student_in_class WHERE class IN  
+(SELECT id FROM Class WHERE name RLIKE '10'))
+LIMIT 1;
+```
+
+</details>
+<details>
+<summary><h2>Задание 45</h2><br>Какие кабинеты чаще всего использовались для проведения занятий? Выведите те, которые использовались максимальное количество раз.</summary>
+
+```mysql
+SELECT classroom FROM Schedule
+GROUP BY classroom
+HAVING COUNT(classroom) = (
+SELECT COUNT(classroom) AS cnt FROM Schedule
+GROUP BY classroom
+ORDER BY cnt DESC
+LIMIT 1
+);
+```
+
+
+```mysql
+SELECT classroom FROM Schedule
+GROUP BY classroom
+HAVING COUNT(*) = (SELECT COUNT(*) 
+    FROM Schedule
+    GROUP BY classroom
+    ORDER BY 1 DESC
+    LIMIT 1);
+```
+
+
+```mysql
+SELECT classroom FROM Schedule
+GROUP BY classroom
+HAVING COUNT(classroom) = (SELECT MAX(cnt)
+FROM (SELECT COUNT(classroom) cnt 
+    FROM Schedule
+    GROUP BY classroom) C);
+```
+
+
+```mysql
+SET @mx = (
+SELECT COUNT(id) FROM Schedule
+GROUP BY classroom
+ORDER BY 1 DESC
+LIMIT 1
+);
+
+SELECT classroom FROM Schedule
+GROUP BY classroom
+HAVING COUNT(id) = @mx;
+```
+
+</details>
+<details>
+<summary><h2>Задание 46</h2><br>В каких классах введет занятия преподаватель "Krauze" ?</summary>
+
+```mysql
+SELECT DISTINCT Class.name FROM Class
+JOIN Schedule ON Class.id=Schedule.class
+JOIN Teacher ON Schedule.teacher=Teacher.id
+WHERE last_name = 'Krauze';
+```
+
+
+```mysql
+SELECT DISTINCT name 
+FROM Class, Schedule, Teacher 
+WHERE Class.id=Schedule.class
+AND Schedule.teacher=Teacher.id
+AND last_name = 'Krauze';
+```
+
+
+```mysql
+SELECT name 
+FROM Class, Schedule, Teacher 
+WHERE Class.id=Schedule.class
+AND Schedule.teacher=Teacher.id
+AND last_name = 'Krauze'
+GROUP BY name;
+```
+
+
+```mysql
+SELECT name 
+FROM Class
+WHERE Class.id IN (
+SELECT class 
+FROM Schedule, Teacher
+WHERE Schedule.teacher=Teacher.id
+AND last_name = 'Krauze');
+```
+
+</details>
+<details>
+<summary><h2>Задание 47</h2><br>Сколько занятий провел Krauze 30 августа 2019 г.?</summary>
+
+```mysql
+SELECT COUNT(number_pair) AS count FROM Schedule
+JOIN Teacher ON Schedule.teacher=Teacher.id
+WHERE last_name = 'Krauze' AND DATE_FORMAT(date, '%d.%m.%Y') = '30.08.2019';
+```
+
+
+```mysql
+SELECT COUNT(Sc.id) count 
+FROM Schedule AS Sc, Teacher
+WHERE Sc.teacher=Teacher.id
+AND last_name = 'Krauze' 
+AND date LIKE '2019-08-30';
+```
+
+
+```mysql
+SELECT COUNT(*) count FROM Schedule, Teacher
+WHERE Schedule.teacher=Teacher.id
+AND last_name = 'Krauze' 
+AND DATE_FORMAT(date, '%d %M %Y') = '30 August 2019';
+```
+
+
+```mysql
+SELECT COUNT(id) count FROM Schedule
+WHERE teacher = (
+SELECT id FROM Teacher
+WHERE last_name = 'Krauze' 
+) 
+AND YEAR(date) = 2019 
+AND MONTH(date) = 8 
+AND DAY(date) = 30;
+```
+
+</details>
+<details>
+<summary><h2>Задание 48</h2><br>Выведите заполненность классов в порядке убывания</summary>
+
+```mysql
+SELECT name, COUNT(student) AS count 
+FROM Student_in_class
+JOIN Class ON Class.id=Student_in_class.class
+GROUP BY name
+ORDER BY count DESC;
+```
+
+
+```mysql
+SELECT name, COUNT(*) count 
+FROM Class
+INNER JOIN Student_in_class ON Class.id=Student_in_class.class
+GROUP BY name
+ORDER BY count DESC;
+```
+
+
+```mysql
+SELECT name, COUNT(student) count 
+FROM Class, Student_in_class
+WHERE Class.id=Student_in_class.class
+GROUP BY name
+ORDER BY count DESC;
+```
+
+
+```mysql
+SELECT DISTINCT name, COUNT(student) OVER(
+PARTITION BY name) count 
+FROM Class, Student_in_class
+WHERE Class.id=Student_in_class.class
+ORDER BY count DESC;
+```
+
+</details>
+<details>
+<summary><h2>Задание 49</h2><br>Какой процент обучающихся учится в "10 A" классе? Выведите ответ в диапазоне от 0 до 100 с округлением до четырёх знаков после запятой, например, 96.0201.</summary>
+
+```mysql
+SELECT (SELECT COUNT(student) 
+    FROM Student_in_class
+    WHERE class IN
+        (SELECT id FROM Class
+        WHERE name = '10 A')
+) / COUNT(*) * 100 AS percent
+FROM Student_in_class;
+```
+
+
+```mysql
+SELECT (SELECT COUNT(student) 
+    FROM Student_in_class
+    WHERE class IN
+        (SELECT id FROM Class
+        WHERE name = '10 A')
+) / (SELECT COUNT(*) 
+    FROM Student_in_class
+    ) * 100 AS percent;
+```
+
+
+```mysql
+SET @buba := (
+SELECT COUNT(student) FROM Student_in_class
+WHERE Student_in_class.class IN
+(SELECT Class.id FROM Class
+WHERE Class.name = '10 A')
+);
+SELECT ROUND((@buba/(COUNT(*))*100), 4) percent FROM Student_in_class;
+```
+
+</details>
+<details>
+<summary><h2>Задание 50</h2><br>Какой процент обучающихся родился в 2000 году? Результат округлить до целого в меньшую сторону.</summary>
+
+```mysql
+SELECT FLOOR(
+    (SELECT COUNT(id) FROM Student
+    WHERE birthday LIKE '2000%'
+    ) / COUNT(id) * 100) AS percent 
+FROM Student;
+```
+
+
+```mysql
+SELECT FLOOR(
+    (SELECT COUNT(*) FROM Student
+    WHERE birthday RLIKE '^2000'
+    ) / COUNT(*)*100) percent 
+FROM Student;
+
+```
+
+
+```mysql
+SET @a = (SELECT COUNT(id) as percent FROM Student
+WHERE YEAR(birthday) = 2000);
+SELECT FLOOR((@a / COUNT(id) * 100)) as percent FROM Student;
+```
+
+
+```mysql
+WITH Pr (a, b) 
+AS (
+SELECT COUNT(id), (SELECT COUNT(id)
+FROM Student
+WHERE YEAR(birthday) = 2000)
+FROM Student
+)
+SELECT FLOOR(b/a*100) percent FROM Pr;
+```
+
+</details>
+<details>
+<summary><h2>Задание 51</h2><br>Добавьте товар с именем "Cheese" и типом "food" в список товаров (Goods).</summary>
+
+```mysql
+INSERT INTO Goods (good_id, good_name, type)
+SELECT (SELECT COUNT(good_id) FROM Goods) + 1, "Cheese", 2;
+```
+
+
+```mysql
+SET @id = (
+SELECT COUNT(good_id) FROM Goods);
+
+INSERT INTO Goods (good_id, good_name, type)
+SELECT @id+1, "Cheese", 2;
+```
+
+
+```mysql
+SET @id = (
+SELECT COUNT(good_id) FROM Goods) + 1;
+
+INSERT INTO Goods
+VALUES (@id, "Cheese", 2);
+```
+
+
+```mysql
+SET @nn = (SELECT MAX(good_id) FROM Goods);
+SET @tp = (SELECT good_type_id FROM GoodTypes
+WHERE good_type_name = 'food');
+INSERT INTO Goods
+VALUES (@nn+1, 'Cheese', @tp);
+```
+
+</details>
+<details>
+<summary><h2>Задание 52</h2><br>Добавьте в список типов товаров (GoodTypes) новый тип "auto".</summary>
+
+```mysql
+INSERT INTO GoodTypes (good_type_id, good_type_name)
+SELECT (
+SELECT COUNT(good_type_id) FROM GoodTypes
+) + 1, "auto";
+```
+
+
+```mysql
+SET @id = (
+SELECT COUNT(good_type_id) FROM GoodTypes) + 1;
+
+INSERT INTO GoodTypes
+VALUES (@id, "auto");
+```
+
+
+```mysql
+SET @nn = (SELECT MAX(good_type_id) FROM GoodTypes);
+INSERT INTO GoodTypes
+VALUES (@nn+1, 'auto');
+```
+
+
+```mysql
+SET @nn = (SELECT MAX(good_type_id) FROM GoodTypes)+1;
+INSERT INTO GoodTypes
+SELECT @nn, 'auto';
+```
+
+</details>
+<details>
+<summary><h2>Задание 53</h2><br>Измените имя "Andie Quincey" на новое "Andie Anthony".</summary>
+
+```mysql
+UPDATE FamilyMembers
+SET member_name="Andie Anthony"
+WHERE member_name="Andie Quincey";
+```
+
+
+```mysql
+UPDATE FamilyMembers
+SET member_name="Andie Anthony"
+WHERE member_name LIKE "Andie_Quincey";
+```
+
+
+```mysql
+DELETE FROM FamilyMembers
+WHERE member_name="Andie Quincey";
+INSERT INTO FamilyMembers(member_id, status, member_name, birthday)
+VALUES(3, "son", "Andie Anthony", CONVERT("1983-06-05T00:00:00", datetime));
+```
+
+</details>
+<details>
+<summary><h2>Задание 54</h2><br>Удалить всех членов семьи с фамилией "Quincey".</summary>
+
+```mysql
+DELETE FROM FamilyMembers
+WHERE member_name LIKE '%Quincey';
+```
+
+
+```mysql
+DELETE FamilyMembers FROM FamilyMembers
+WHERE member_name REGEXP "Quincey$";
+```
+
+
+```mysql
+DELETE FROM FamilyMembers
+WHERE member_name RLIKE 'Quincey';
+```
+
+</details>
+<details>
+<summary><h2>Задание 55</h2><br>Удалить компании, совершившие наименьшее количество рейсов.</summary>
+
+```mysql
+DELETE FROM Company
+WHERE Company.id IN (
+    SELECT company FROM Trip
+    GROUP BY company
+    HAVING COUNT(id) = 
+        (SELECT COUNT(id) cnt FROM Trip
+        GROUP BY company
+        ORDER BY cnt
+        LIMIT 1));
+```
+
+
+```mysql
+DELETE Company FROM Company
+WHERE id IN (SELECT company FROM Trip
+    GROUP BY company
+    HAVING COUNT(*) = (
+        SELECT COUNT(*) FROM Trip
+        GROUP BY company 
+        ORDER BY 1 LIMIT 1));
+```
+
+
+```mysql
+DELETE Company FROM Company
+WHERE id IN (SELECT company FROM Trip
+    GROUP BY company
+    HAVING COUNT(id) = (
+        SELECT MIN(cnt) FROM (
+            SELECT COUNT(id) cnt FROM Trip
+            GROUP BY company) V));
+```
+
+</details>
+<details>
+<summary><h2>Задание 56</h2><br>Удалить все перелеты, совершенные из Москвы (Moscow).</summary>
+
+```mysql
+DELETE Trip FROM Trip
+WHERE town_from="Moscow";
+```
+
+
+```mysql
+DELETE FROM Trip
+WHERE town_from LIKE "Moscow";
+```
+
+
+```mysql
+DELETE FROM Trip
+WHERE town_from RLIKE "^Moscow$";
+```
+
+</details>
+<details>
+<summary><h2>Задание 57</h2><br>Перенести расписание всех занятий на 30 мин. вперед.</summary>
+
+```mysql
+UPDATE Timepair
+SET start_pair = TIMESTAMPADD(MINUTE, 30, start_pair),
+end_pair = TIMESTAMPADD(MINUTE, 30, end_pair);
+```
+
+
+```mysql
+UPDATE Timepair
+SET start_pair = ADDTIME(start_pair, "00:30"),
+end_pair = ADDTIME(end_pair, "00:30");
+```
+
+
+```mysql
+UPDATE Timepair
+SET start_pair = SUBTIME(start_pair, -3000),
+end_pair = SUBTIME(end_pair, -3000);
+```
+
+
+```mysql
+UPDATE Timepair
+SET start_pair = ADDDATE(start_pair, INTERVAL 30 MINUTE),
+end_pair = ADDDATE(end_pair, INTERVAL 30 MINUTE);
+```
+
+</details>
+<details>
+<summary><h2>Задание 58</h2><br>Добавить отзыв с рейтингом 5 на жилье, находящиеся по адресу "11218, Friel Place, New York", от имени "George Clooney"</summary>
+
+```mysql
+INSERT INTO Reviews (id, reservation_id, rating)
+VALUES ((SELECT COUNT(*) FROM Reviews R) + 1, (SELECT Reservations.id FROM Reservations
+ JOIN Rooms ON Reservations.room_id = Rooms.id
+ JOIN Users ON Reservations.user_id = Users.id
+ WHERE address = "11218, Friel Place, New York"
+ AND name = "George Clooney"), 5);
+```
+
+
+```mysql
+SET @id = (SELECT COUNT(*) FROM Reviews) + 1;
+SET @hm = (SELECT Reservations.id 
+ FROM Reservations
+ JOIN Rooms ON Reservations.room_id = Rooms.id
+ JOIN Users ON Reservations.user_id = Users.id
+ WHERE address = "11218, Friel Place, New York"
+ AND name = "George Clooney");
+INSERT INTO Reviews
+SET id=@id, reservation_id=@hm, rating=5;
+```
+
+
+```mysql
+SET @id = (SELECT MAX(id) FROM Reviews);
+SET @adr = (SELECT id FROM Reservations
+WHERE room_id IN (SELECT id FROM Rooms
+WHERE address = '11218, Friel Place, New York')
+AND user_id IN (SELECT id FROM Users
+WHERE name = 'George Clooney'));
+INSERT INTO Reviews
+VALUES (@id+1, @adr, 5);
+```
+
+</details>
+<details>
+<summary><h2>Задание 59</h2><br>Вывести пользователей,указавших Белорусский номер телефона ? Телефонный код Белоруссии +375.</summary>
+
+```mysql
+SELECT * FROM Users
+WHERE phone_number LIKE '+375%';
+```
+
+
+```mysql
+SELECT * FROM Users
+WHERE phone_number REGEXP '^\\+375';
+```
+
+
+```mysql
+SELECT * FROM Users
+WHERE phone_number RLIKE '^.375 ';
+```
+
+</details>
+<details>
+<summary><h2>Задание 60</h2><br>Выведите идентификаторы преподавателей, которые хотя бы один раз за всё время преподавали в каждом из одиннадцатых классов.</summary>
+
+```mysql
+SELECT Schedule.teacher teacher FROM Schedule
+JOIN Class ON Class.id=Schedule.class
+WHERE Class.name = '11 A'
+INTERSECT  
+SELECT Schedule.teacher teacher FROM Schedule
+JOIN Class ON Class.id=Schedule.class
+WHERE Class.name = '11 B';
+```
+
+
+```mysql
+SELECT teacher FROM Schedule
+JOIN Class ON Schedule.class=Class.id
+WHERE name RLIKE "11"
+GROUP BY teacher
+HAVING COUNT(DISTINCT class) = 2;
+```
+
+
+```mysql
+SELECT DISTINCT t1.teacher FROM (
+    SELECT teacher FROM Schedule
+    WHERE class = 8) t1, (
+    SELECT teacher FROM Schedule
+    WHERE class = 9) t2
+WHERE t1.teacher=t2.teacher;
+```
+
+
+```mysql
+SELECT DISTINCT s1.teacher FROM Schedule s1
+    JOIN Schedule s2 ON s1.teacher=s2.teacher
+    AND s1.class = 8 AND s2.class = 9;
+```
+
+</details>
+<details>
+<summary><h2>Задание 61</h2><br>Выведите список комнат, которые были зарезервированы хотя бы на одни сутки в 12-ую неделю 2020 года. В данной задаче в качестве одной недели примите период из семи дней, первый из которых начинается 1 января 2020 года. Например, первая неделя года — 1–7 января, а третья — 15–21 января.</summary>
+
+```mysql
+SELECT Rooms.* FROM Reservations
+JOIN Rooms ON Reservations.room_id=Rooms.id
+WHERE YEAR(start_date) = 2020  AND WEEK(start_date, 1) = 12;
+```
+
+
+```mysql
+SELECT Rooms.* FROM Reservations, Rooms
+WHERE Reservations.room_id=Rooms.id
+AND YEAR(start_date) = 2020 
+AND WEEK(start_date, 1) = 12;
+```
+
+
+```mysql
+SELECT * FROM Rooms
+WHERE id IN (
+SELECT room_id FROM Reservations
+WHERE YEAR(start_date) = 2020 
+AND WEEK(start_date, 1) = 12
+);
+```
+
+</details>
+<details>
+<summary><h2>Задание 62</h2><br>Вывести в порядке убывания популярности доменные имена 2-го уровня, используемые пользователями для электронной почты. Полученный результат необходимо дополнительно отсортировать по возрастанию названий доменных имён.</summary>
+
+```mysql
+SELECT SUBSTRING_INDEX(email, '@', -1) domain, COUNT(email) count FROM Users
+GROUP BY domain
+ORDER BY count DESC, 1;
+```
+
+
+```mysql
+SELECT REGEXP_SUBSTR(email, "[^@\.]+\.[^\.]+$") domain, COUNT(*) count
+FROM Users
+GROUP BY domain
+ORDER BY count DESC, domain;
+```
+
+
+```mysql
+SELECT SUBSTR(email, INSTR(email, "@") + 1) domain, COUNT(email) count 
+FROM Users
+GROUP BY domain
+HAVING domain RLIKE "^[^\.]+\.[^\.]+$"
+ORDER BY count DESC, domain ASC;
+```
+
+</details>
+<details>
+<summary><h2>Задание 63</h2><br>Выведите отсортированный список (по возрастанию) фамилий и имен студентов в виде Фамилия.И.</summary>
+
+```mysql
+SELECT CONCAT(last_name, '.', SUBSTRING(first_name, 1, 1) , '.') AS name 
+FROM Student
+ORDER BY name ASC;
+```
+
+
+```mysql
+SELECT CONCAT(last_name, '.', SUBSTRING(first_name, 1, 1) , '.') as name 
+FROM Student
+ORDER BY name;
+```
+
+
+```mysql
+SELECT CONCAT(last_name, ".", LEFT(first_name, 1), ".") name 
+FROM Student
+ORDER BY 1;
+```
+
+</details>
+<details>
+<summary><h2>Задание 64</h2><br>Вывести количество бронирований по каждому месяцу каждого года, в которых было хотя бы 1 бронирование. Результат отсортируйте в порядке возрастания даты бронирования.</summary>
+
+```mysql
+SELECT YEAR(start_date) AS year, MONTH(start_date) AS month, COUNT(id) amount FROM Reservations
+GROUP BY year, month
+ORDER BY year, month;
+```
+
+
+```mysql
+SELECT SUBSTRING(start_date, 1, 4) year, CONVERT(SUBSTRING(start_date, 6, 2), UNSIGNED) month, COUNT(id) amount FROM Reservations
+GROUP BY year, month
+ORDER BY year ASC, month ASC;
+```
+
+
+```mysql
+SELECT DISTINCT YEAR(start_date) year, MONTH(start_date) month, COUNT(id) OVER(
+PARTITION BY YEAR(start_date), 
+    MONTH(start_date)
+) amount
+FROM Reservations
+ORDER BY year, month;
+```
+
+</details>
+<details>
+<summary><h2>Задание 65</h2><br>Необходимо вывести рейтинг для комнат, которые хоть раз арендовали, как среднее значение рейтинга отзывов округленное до целого вниз.</summary>
+
+```mysql
+SELECT room_id, FLOOR(AVG(rating)) AS rating
+FROM Reservations
+INNER JOIN Reviews ON Reviews.reservation_id=Reservations.id
+GROUP BY room_id;
+```
+
+
+```mysql
+SELECT room_id, FLOOR(AVG(rating)) rating
+FROM Reservations, Reviews
+WHERE Reviews.reservation_id=Reservations.id
+GROUP BY room_id;
+```
+
+
+```mysql
+SELECT DISTINCT room_id, FLOOR(
+AVG(rating) OVER (
+PARTITION BY room_id)) rating
+FROM Reservations, Reviews
+WHERE Reviews.reservation_id=Reservations.id;
+```
+
+</details>
+<details>
+<summary><h2>Задание 66</h2><br>Вывести список комнат со всеми удобствами (наличие ТВ, интернета, кухни и кондиционера), а также общее количество дней и сумму за все дни аренды каждой из таких комнат.</summary>
+
+```mysql
+SELECT home_type, address, IFNULL(SUM(total/Reservations.price), 0) AS days, IFNULL(SUM(total), 0) AS total_fee FROM Rooms
+LEFT OUTER JOIN Reservations
+ON Reservations.room_id=Rooms.id
+WHERE has_tv = 1
+  AND has_internet = 1
+  AND has_kitchen = 1
+  AND has_air_con = 1
+GROUP BY home_type, address;
+```
+
+
+```mysql
+SELECT home_type, address, IFNULL(SUM(TIMESTAMPDIFF(DAY, start_date, end_date)), 0) days, IFNULL(SUM(total), 0) total_fee FROM Rooms
+LEFT JOIN Reservations
+ON Reservations.room_id=Rooms.id
+WHERE has_tv 
+AND has_internet 
+AND has_kitchen 
+AND has_air_con
+GROUP BY home_type, address;
+```
+
+
+```mysql
+SELECT home_type, address, IFNULL(SUM(TIMESTAMPDIFF(DAY, start_date, end_date)), 0) days, IFNULL(SUM(total), 0) total_fee
+FROM Rooms, Reservations
+WHERE Rooms.id IN (SELECT id FROM Rooms
+EXCEPT
+SELECT room_id FROM Reservations)
+AND has_tv 
+AND has_internet 
+AND has_kitchen 
+AND has_air_con
+GROUP BY home_type, address;
+```
+
+
+```mysql
+SELECT home_type, address, SUM(TIMESTAMPDIFF(DAY, start_date, end_date)) days, SUM(total) total_fee FROM Rooms
+JOIN Reservations ON Rooms.id=Reservations.room_id
+WHERE has_tv AND has_internet AND has_kitchen AND has_air_con
+GROUP BY home_type, address
+UNION
+SELECT home_type, address, IFNULL(SUM(TIMESTAMPDIFF(DAY, start_date, end_date)), 0) days, IFNULL(SUM(total), 0) total_fee FROM Rooms
+LEFT JOIN Reservations ON Rooms.id=Reservations.room_id
+WHERE room_id is NULL AND has_tv AND has_internet AND has_kitchen AND has_air_con
+GROUP BY home_type, address;
+```
+
+</details>
+<details>
+<summary><h2>Задание 67</h2><br>Вывести время отлета и время прилета для каждого перелета в формате "ЧЧ:ММ, ДД.ММ - ЧЧ:ММ, ДД.ММ", где часы и минуты с ведущим нулем, а день и месяц без.</summary>
+
+```mysql
+SELECT CONCAT(
+DATE_FORMAT(time_out, '%H:%i, %e.%c'), ' - ', 
+DATE_FORMAT(time_in, '%H:%i, %e.%c')
+) AS flight_time 
+FROM Trip;
+```
+
+
+```mysql
+SELECT CONCAT(
+LEFT(TIME(time_out), 5), ", ", 
+DAY(time_out), ".", MONTH(time_out),
+' - ', 
+LEFT(TIME(time_in), 5), ", ", 
+DAY(time_in), ".", MONTH(time_in)
+) as flight_time 
+FROM Trip;
+```
+
+
+```mysql
+SELECT CONCAT(SUBSTR(time_out, 12, 5), ", ", 
+CONVERT(SUBSTR(time_out, 9, 2), UNSIGNED), ".",
+CONVERT(SUBSTR(time_out, 6, 2), UNSIGNED),
+' - ', 
+SUBSTR(time_in, 12, 5), ", ", 
+CONVERT(SUBSTR(time_in, 9, 2), UNSIGNED), ".",
+CONVERT(SUBSTR(time_in, 6, 2), UNSIGNED)
+) flight_time
+FROM Trip;
+```
+
+</details>
+<details>
+<summary><h2>Задание 68</h2><br>Для каждой комнаты, которую снимали как минимум 1 раз, найдите имя человека, снимавшего ее последний раз, и дату, когда он выехал</summary>
+
+```mysql
+SELECT room_id, name, end_date FROM Reservations
+JOIN Users ON Reservations.user_id=Users.id
+GROUP BY room_id, name, end_date
+HAVING end_date IN (
+SELECT MAX(end_date) FROM Reservations
+GROUP BY room_id);
+```
+
+
+```mysql
+SELECT room_id, name, end_date FROM Reservations
+JOIN Users ON Users.id=Reservations.user_id
+WHERE end_date IN (SELECT MAX(end_date) 
+FROM Reservations GROUP BY room_id);
+```
+
+
+```mysql
+SELECT room_id, name, end_date FROM Reservations
+JOIN Users ON Users.id=Reservations.user_id
+JOIN (SELECT MAX(end_date) mx FROM Reservations GROUP BY room_id) X ON mx=end_date;
+```
+
+
+```mysql
+SELECT room_id, (
+    SELECT name FROM Reservations, Users
+    WHERE X.room_id=Reservations.room_id
+    AND Reservations.user_id=Users.id
+    ORDER BY end_date DESC
+    LIMIT 1) name, MAX(end_date) end_date
+FROM Reservations X
+GROUP BY room_id;
+```
+
+</details>
+<details>
+<summary><h2>Задание 69</h2><br>Вывести идентификаторы всех владельцев комнат, что размещены на сервисе бронирования жилья и сумму, которую они заработали</summary>
+
+```mysql
+SELECT owner_id, IFNULL(SUM(total), 0) total_earn FROM Rooms
+LEFT JOIN Reservations R ON R.room_id=Rooms.id
+GROUP BY owner_id;
+```
+
+
+```mysql
+SELECT owner_id, IF(SUM(total), SUM(total), 0) total_earn FROM Rooms
+LEFT JOIN Reservations R ON R.room_id=Rooms.id
+GROUP BY owner_id;
+```
+
+
+```mysql
+SELECT DISTINCT owner_id, COALESCE(SUM(total) OVER (PARTITION BY owner_id), 0) total_earn
+FROM Rooms LEFT JOIN Reservations 
+    ON Reservations.room_id = Rooms.id;
+```
+
+
+```mysql
+SELECT DISTINCT owner_id, COALESCE(
+ (SELECT SUM(total) FROM Reservations Rs
+  JOIN Rooms R2 ON Rs.room_id = R2.id
+  AND R1.owner_id = R2.owner_id),  
+    0) total_earn
+FROM Rooms R1;
+```
+
+</details>
+<details>
+<summary><h2>Задание 70</h2><br>Необходимо категоризовать жилье на economy, comfort, premium по цене соответственно <= 100, 100 < цена < 200, >= 200. В качестве результата вывести таблицу с названием категории и количеством жилья, попадающего в данную категорию</summary>
+
+```mysql
+SELECT IF(
+price <= 100, 'economy', 
+IF(price < 200, 'comfort', 'premium')
+) AS category, COUNT(*) AS count 
+FROM Rooms
+GROUP BY category;
+```
+
+
+```mysql
+SELECT CASE
+  WHEN price <= 100 THEN 'economy'
+  WHEN price > 100
+  AND price < 200 THEN 'comfort'
+  WHEN price >= 200 THEN 'premium'
+ END AS category,
+ COUNT(id) COUNT
+FROM Rooms
+GROUP BY category;
+```
+
+
+```mysql
+WITH Cat (category, count) AS (
+SELECT IF(
+price <= 100, 'economy', 
+IF(price < 200, 'comfort', 'premium')
+) c, COUNT(*)
+FROM Rooms
+GROUP BY c)
+
+SELECT * FROM Cat;
+```
+
+</details>
+<details>
+<summary><h2>Задание 71</h2><br>Найдите какой процент пользователей, зарегистрированных на сервисе бронирования, хоть раз арендовали или сдавали в аренду жилье. Результат округлите до сотых.</summary>
+
+```mysql
+SELECT ROUND(
+    (SELECT COUNT(*) FROM (
+    SELECT user_id FROM Reservations
+    UNION
+    SELECT owner_id FROM Rooms, Reservations
+    WHERE Rooms.id=Reservations.room_id) act) / COUNT(DISTINCT id) *100, 2) AS percent 
+FROM Users;
+```
+
+
+```mysql
+WITH Full AS (
+SELECT user_id FROM Reservations
+UNION
+SELECT owner_id FROM Rooms
+    JOIN Reservations 
+    ON Rooms.id=Reservations.room_id)
+    
+SELECT ROUND(
+    (SELECT COUNT(*) 
+    FROM Full) / COUNT(DISTINCT id) *100, 
+    2) as percent FROM Users;
+```
+
+
+```mysql
+SET @act = (
+SELECT COUNT(*) FROM (
+SELECT user_id FROM Reservations
+UNION 
+SELECT owner_id FROM Rooms
+JOIN Reservations 
+ON Reservations.room_id=Rooms.id) X);
+SET @all = (
+SELECT COUNT(DISTINCT id) FROM Users);
+
+SELECT ROUND(@act / @all*100, 2) percent;
+```
+
+
+```mysql
+SET @all = (
+SELECT COUNT(DISTINCT id) FROM Users);
+SET @off = ROUND(
+(
+SELECT COUNT(*) FROM (SELECT id FROM Users
+EXCEPT 
+SELECT user_id FROM Reservations
+EXCEPT
+SELECT owner_id FROM Rooms, Reservations
+WHERE Rooms.id=Reservations.room_id) act
+) / @all * 100, 2);
+
+SELECT 100 - @off percent;
+```
+
+</details>
+<details>
+<summary><h2>Задание 72</h2><br>Выведите среднюю цену бронирования за сутки для каждой из комнат, которую бронировали хотя бы один раз. Среднюю цену необходимо округлить до целого значения вверх.</summary>
+
+```mysql
+SELECT room_id, CEILING(AVG(price)) AS avg_price FROM Reservations
+GROUP BY room_id;
+```
+
+
+```mysql
+SELECT room_id, CEILING(SUM(price) / COUNT(total)) as avg_price FROM Reservations
+GROUP BY room_id;
+```
+
+
+```mysql
+SELECT room_id, CEILING(
+    SUM(price) / COUNT(room_id)
+    ) avg_price 
+FROM Reservations
+GROUP BY room_id;
+```
+
+
+```mysql
+SELECT DISTINCT room_id, CEILING(
+    AVG(price) OVER(
+    PARTITION BY room_id
+    )) avg_price 
+FROM Reservations;
+```
+
+</details>
+<details>
+<summary><h2>Задание 73</h2><br>Выведите id тех комнат, которые арендовали нечетное количество раз</summary>
+
+```mysql
+SELECT room_id, COUNT(total) AS count FROM Reservations
+GROUP BY room_id
+HAVING count % 2 != 0;
+```
+
+
+```mysql
+SELECT room_id, COUNT(total) as count FROM Reservations
+GROUP BY room_id
+HAVING NOT count % 2 = 0;
+```
+
+
+```mysql
+SELECT room_id, COUNT(room_id) count FROM Reservations
+GROUP BY room_id
+HAVING count/2 <> FLOOR(count/2);
+```
+
+</details>
+<details>
+<summary><h2>Задание 74</h2><br>Выведите идентификатор и признак наличия интернета в помещении. Если интернет в сдаваемом жилье присутствует, то выведите «YES», иначе «NO».</summary>
+
+```mysql
+SELECT id, IF(has_internet IS TRUE, 
+    "YES", "NO") AS has_internet 
+FROM Rooms;
+```
+
+
+```mysql
+SELECT id, CASE has_internet
+    WHEN 1 THEN "YES"
+    ELSE "NO" END has_internet 
+FROM Rooms;
+```
+
+
+```mysql
+SELECT id, IF(has_internet, 
+    "YES", "NO") has_internet 
+FROM Rooms;
+```
+
+</details>
+<details>
+<summary><h2>Задание 75</h2><br>Выведите фамилию, имя и дату рождения студентов, кто был рожден в мае.
+</summary>
+
+```mysql
+SELECT last_name, first_name, birthday FROM Student
+WHERE MONTH(birthday)=5;
+```
+
+
+```mysql
+SELECT last_name, first_name, birthday 
+FROM Student
+WHERE birthday LIKE "____-_5%";
+```
+
+
+```mysql
+SELECT last_name, first_name, birthday 
+FROM Student
+WHERE DATE_FORMAT(birthday, "%M") = "May";
+```
+
+
+```mysql
+SELECT last_name, first_name, birthday 
+FROM Student
+WHERE LPAD(SUBSTR(birthday, 6, 6), 2, " ") = 5;
+```
+
+</details>
+<details>
+<summary><h2>Задание 76</h2><br>Вывести имена всех пользователей сервиса бронирования жилья, а также два признака: является ли пользователь собственником какого-либо жилья (is_owner) и является ли пользователь арендатором (is_tenant). В случае наличия у пользователя признака необходимо вывести в соответствующее поле 1, иначе 0.</summary>
+
+```mysql
+SELECT name, 
+    IF(id IN (SELECT owner_id 
+        FROM Rooms), 1, 0) AS is_owner,
+    IF(id IN (SELECT user_id 
+        FROM Reservations), 1, 0) AS is_tenant
+FROM Users;
+```
+
+
+```mysql
+SELECT name, CASE 
+    WHEN id IN (SELECT owner_id 
+        FROM Rooms) 
+    THEN 1 ELSE 0 END AS is_owner, CASE
+    WHEN id IN (SELECT user_id 
+        FROM Reservations) 
+    THEN 1 ELSE 0 END AS is_tenant
+FROM Users;
+```
+
+
+```mysql
+SELECT name, EXISTS (SELECT * FROM Rooms
+        WHERE owner_id=Users.id) is_owner, 
+    EXISTS (SELECT * FROM Reservations
+        WHERE user_id=Users.id) is_tenant
+FROM Users;
+```
+
+
+```mysql
+SELECT name,
+ Users.id <=> owner_id is_owner,
+ Users.id <=> user_id is_tenant
+FROM Users 
+ LEFT JOIN Reservations 
+ ON Reservations.user_id = Users.id
+ LEFT JOIN Rooms 
+    ON Users.id = owner_id
+GROUP by name, is_owner, is_tenant, email;
+```
+
+</details>
+<details>
+<summary><h2>Задание 77</h2><br>Создайте представление с именем "People", которое будет содержать список имен (first_name) и фамилий (last_name) всех студентов (Student) и преподавателей(Teacher)</summary>
+
+```mysql
+CREATE VIEW People AS (
+SELECT first_name, last_name FROM Student
+UNION
+SELECT first_name, last_name FROM Teacher);
+```
+
+
+```mysql
+CREATE VIEW People AS (
+SELECT first_name, last_name FROM Teacher
+UNION ALL
+SELECT first_name, last_name FROM Student
+);
+```
+
+
+```mysql
+CREATE VIEW People AS (
+SELECT * FROM (SELECT first_name, last_name FROM Teacher
+    UNION ALL
+    SELECT first_name, last_name 
+    FROM Student) ppl);
+```
+
+</details>
+<details>
+<summary><h2>Задание 78</h2><br>Выведите всех пользователей с электронной почтой в «hotmail.com»</summary>
+
+```mysql
+SELECT * FROM Users
+WHERE email LIKE '%@hotmail%';
+```
+
+
+```mysql
+SELECT * FROM Users
+WHERE email RLIKE '@hotmail';
+```
+
+
+```mysql
+SELECT * FROM Users
+WHERE email REGEXP '[@]hotmail[.]';
+```
+
+</details>
+<details>
+<summary><h2>Задание 79</h2><br>Выведите поля id, home_type, price у всего жилья из таблицы Rooms. Если комната имеет телевизор и интернет одновременно, то в качестве цены в поле price выведите цену, применив скидку 10%.</summary>
+
+```mysql
+SELECT id, home_type, IF(
+    has_internet = 1 AND has_tv = 1, 
+    price*0.9, price) AS price 
+FROM Rooms;
+```
+
+
+```mysql
+SELECT id, home_type, IF(
+    has_tv and has_internet, 
+    price*0.9, price) price 
+FROM Rooms;
+```
+
+
+```mysql
+SELECT id, home_type, 
+    CASE has_tv and has_internet
+    WHEN 1 THEN price*0.9
+    ELSE price END price 
+FROM Rooms;
+```
+
+</details>
+<details>
+<summary><h2>Задание 80</h2><br>Создайте представление «Verified_Users» с полями id, name и email, которое будет показывает только тех пользователей, у которых подтвержден адрес электронной почты.</summary>
+
+```mysql
+CREATE VIEW Verified_Users AS
+SELECT id, name, email FROM Users
+WHERE email_verified_at IS NOT NULL;
+```
+
+
+```mysql
+CREATE VIEW Verified_Users AS
+SELECT id, name, email FROM Users
+WHERE email_verified_at;
+```
+
+
+```mysql
+CREATE VIEW Verified_Users AS
+SELECT id, name, email FROM Users
+WHERE NOT ISNULL(email_verified_at);
+```
+
+
+```mysql
+CREATE VIEW Verified_Users AS
+SELECT id, name, email FROM Users
+WHERE NOT email_verified_at <=> NULL;
+```
+
+</details>
+
+<details>
+<summary><h2>Задание 93</h2><br>Какой средний возраст клиентов, купивших Smartwatch (использовать наименование товара product.name) в 2024 году?</summary>
+
+```mysql
+SELECT AVG(DISTINCT age) AS average_age
+FROM Customer
+ JOIN Purchase ON Customer.customer_key = Purchase.customer_key
+ JOIN Product ON Purchase.product_key = Product.product_key
+WHERE Product.name = "Smartwatch"
+ AND YEAR(date) = 2024;
+```
+
+
+```mysql
+SELECT AVG(age) as average_age FROM Customer
+WHERE customer_key IN 
+    (
+    SELECT customer_key FROM Purchase 
+    WHERE YEAR(Purchase.date) = 2024
+    AND product_key IN  
+        (SELECT product_key FROM Product
+        WHERE Product.name = 'Smartwatch')
+    );
+```
+
+
+```mysql
+SELECT AVG(DISTINCT age) average_age 
+FROM Customer
+    JOIN Purchase USING (customer_key)
+    JOIN Product USING (product_key)
+WHERE YEAR(Purchase.date) = 2024
+AND Product.name = 'Smartwatch';
+```
+
+
+```mysql
+SELECT AVG(C.age) average_age
+FROM Customer C
+WHERE EXISTS (
+  SELECT "Check"
+  FROM Product
+   JOIN Purchase USING(product_key)
+  WHERE Product.name = 'Smartwatch' 
+  AND YEAR(Purchase.date) = 2024
+  AND customer_key=C.customer_key);
+```
+
+
+```mysql
+SELECT AVG(age) average_age FROM Customer
+WHERE customer_key IN (
+    SELECT customer_key FROM Purchase
+        NATURAL JOIN Product
+    WHERE YEAR(date) = 2024
+    AND name = 'Smartwatch');
+```
+
+</details>
+<details>
+<summary><h2>Задание 94</h2><br>Вывести имена покупателей, каждый из которых приобрёл Laptop и Monitor (использовать наименование товара product.name) в марте 2024 года?</summary>
+
+```mysql
+SELECT Customer.name
+FROM Customer
+ JOIN Purchase ON Customer.customer_key = Purchase.customer_key
+ JOIN Product ON Purchase.product_key = Product.product_key
+WHERE Product.name = "Laptop"
+ AND YEAR(date) = 2024
+ AND MONTH(date) = 3
+INTERSECT
+SELECT Customer.name
+FROM Customer
+ JOIN Purchase ON Customer.customer_key = Purchase.customer_key
+ JOIN Product ON Purchase.product_key = Product.product_key
+WHERE Product.name = "Monitor"
+ AND YEAR(date) = 2024
+ AND MONTH(date) = 3;
+```
+
+
+```mysql
+SELECT Customer.name FROM Customer
+    JOIN Purchase USING(customer_key)
+    JOIN Product USING(product_key)
+WHERE Product.name IN ("Monitor", "Laptop")
+AND YEAR(date) = 2024
+AND MONTH(date) = 3
+GROUP BY Customer.name
+HAVING COUNT(DISTINCT Purchase.product_key) > 1;
+```
+
+
+```mysql
+SELECT C.name FROM Customer C
+    NATURAL JOIN Purchase P
+WHERE P.product_key IN (1, 5)
+AND date RLIKE "2024-03"
+GROUP BY C.name
+HAVING COUNT(DISTINCT P.product_key) > 1;
+```
+
+</details>
+
+<details>
+<summary><h2>Задание 97</h2><br>Посчитать количество работающих складов на текущую дату по каждому городу. Вывести только те города, у которых количество складов более 80. Данные на выходе - город, количество складов.</summary>
+
+```mysql
+SELECT city, COUNT(name) AS warehouse_count
+FROM Warehouses
+WHERE date_close IS NULL
+GROUP BY city
+HAVING warehouse_count > 80;
+```
+
+
+```mysql
+SELECT city, COUNT(warehouse_id) as warehouse_count 
+FROM Warehouses
+WHERE ISNULL(date_close)
+GROUP BY city
+HAVING warehouse_count > 80;
+```
+
+
+```mysql
+WITH S_ON (a, b) AS
+(SELECT city, 
+    COUNT(warehouse_id) OVER (
+    PARTITION BY city) 
+FROM Warehouses
+WHERE date_close<=>NULL)
+
+SELECT DISTINCT a city, b warehouse_count
+FROM Warehouses 
+    JOIN S_ON ON b > 80 AND TRUE;
+```
+
+</details>
+
+<details>
+<summary><h2>Задание 99</h2><br>Посчитай доход с женской аудитории (доход = сумма(price * items)). Обратите внимание, что в таблице женская аудитория имеет поле user_gender «female» или «f».</summary>
+
+```mysql
+SELECT SUM(items*price) AS income_from_female
+FROM Purchases
+WHERE user_gender LIKE "f%";
+```
+
+
+```mysql
+SELECT SUM(items*price) as income_from_female
+FROM Purchases
+WHERE user_gender RLIKE "^([f]|[fe]{2})";
+```
+
+
+```mysql
+SELECT SUM(items*price) income_from_female
+FROM Purchases
+WHERE user_gender REGEXP "^[[^m]f]";
+```
+
+</details>
+
+<details>
+<summary><h2>Задание 101</h2><br>Выведи для каждого пользователя первое наименование, которое он заказал (первое по времени транзакции).</summary>
+
+```mysql
+SELECT user_id, item FROM Transactions
+WHERE transaction_ts IN (
+    SELECT MIN(transaction_ts) 
+    FROM Transactions
+    GROUP BY user_id);
+```
+
+
+```mysql
+SELECT DISTINCT user_id, 
+    FIRST_VALUE(item) OVER (
+    PARTITION BY user_id 
+    ORDER BY transaction_ts) item
+FROM Transactions;
+```
+
+
+```mysql
+SELECT DISTINCT user_id, (
+    SELECT item FROM Transactions
+    WHERE user_id=T.user_id
+    ORDER BY transaction_ts
+    LIMIT 1) item
+FROM Transactions T;
+```
+
+</details>
+
+<details>
+<summary><h2>Задание 103</h2><br>Вывести список имён сотрудников, получающих большую заработную плату, чем у непосредственного руководителя.</summary>
+
+```mysql
+SELECT Rab.name 
+FROM Employee AS Rab
+JOIN Employee AS Ruk ON Rab.chief_id = Ruk.id
+WHERE Rab.salary > Ruk.salary;
+```
+
+
+```mysql
+SELECT Rab.name FROM Employee Rab, Employee Ruk
+WHERE Rab.chief_id <=> Ruk.id 
+AND Rab.salary > Ruk.salary;
+```
+
+
+```mysql
+SELECT Rab.name FROM Employee Rab 
+JOIN Employee Ruk 
+ON Rab.chief_id = Ruk.id AND Rab.salary > Ruk.salary;
+```
+
+</details>
+
+<details>
+<summary><h2>Задание 109</h2><br>Выведите название страны, где находится город «Salzburg»</summary>
+
+```mysql
+SELECT Countries.name AS country_name 
+FROM Countries
+JOIN Regions ON Regions.countryid=Countries.id
+JOIN Cities ON Regions.id=Cities.regionid
+WHERE Cities.name="Salzburg";
+```
+
+
+```mysql
+SELECT Countries.name as country_name 
+FROM Countries, Regions, Cities
+WHERE Regions.countryid=Countries.id
+AND Regions.id=Cities.regionid
+AND Cities.name="Salzburg";
+```
+
+
+```mysql
+SELECT name country_name 
+FROM Countries
+WHERE id IN (
+SELECT countryid FROM Regions, Cities 
+WHERE Regions.id=Cities.regionid
+AND Cities.name="Salzburg");
+```
+
+</details>
+
+<details>
+<summary><h2>Задание 111</h2><br>Посчитайте население каждого региона. В качестве результата выведите название региона и его численность населения.</summary>
+
+```mysql
+SELECT Regions.name AS region_name, 
+    SUM(population) AS total_population 
+FROM Regions INNER JOIN Cities 
+    ON Regions.id=Cities.regionid
+GROUP BY region_name;
+```
+
+
+```mysql
+SELECT DISTINCT Rg.name region_name, (
+    SELECT SUM(population) FROM Cities Ct
+    WHERE Rg.id=Ct.regionid) total_population
+FROM Regions Rg;
+```
+
+
+```mysql
+SELECT DISTINCT Regions.name region_name, 
+    SUM(population) OVER(
+    PARTITION BY Regions.name) total_population
+FROM Regions JOIN Cities 
+    ON Regions.id<=>Cities.regionid;
+```
+
+</details>
+
+<details>
+<summary><h2>Задание 114</h2><br>Напишите запрос, который выведет имена пилотов, которые в качестве второго пилота (second_pilot_id) в августе 2023 года летали в New York</summary>
+
+```mysql
+SELECT name FROM Pilots
+JOIN Flights ON Pilots.pilot_id=Flights.second_pilot_id
+WHERE YEAR(flight_date) = 2023 
+AND MONTH(flight_date) = 8 
+AND destination = "new york";
+```
+
+
+```mysql
+SELECT name FROM Pilots
+JOIN Flights ON Pilots.pilot_id=Flights.second_pilot_id
+WHERE destination LIKE "new_york" 
+AND LEFT(DATE(flight_date), 7) = "2023-08";
+```
+
+
+```mysql
+SELECT name FROM Pilots, Flights
+WHERE Pilots.pilot_id=Flights.second_pilot_id
+AND BINARY destination = "New York" 
+AND flight_date RLIKE "^2023-08";
+```
+
+</details>
